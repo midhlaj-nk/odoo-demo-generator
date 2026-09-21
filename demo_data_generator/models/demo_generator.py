@@ -42,10 +42,15 @@ class DemoDataGenerator(models.AbstractModel):
         else:
             gen.from_state(self._load_state())
         try:
-            # Savepoint: a failed step rolls back cleanly and the cursor stays
-            # usable for the response and the state write.
-            with self.env.cr.savepoint():
+            if key == 'modules':
+                # button_immediate_install commits and reloads the registry, so
+                # it cannot run inside a savepoint.
                 count, detail = gen.run_step(key)
+            else:
+                # Savepoint: a failed step rolls back cleanly and the cursor
+                # stays usable for the response and the state write.
+                with self.env.cr.savepoint():
+                    count, detail = gen.run_step(key)
         except Exception as e:  # noqa: BLE001 - one failing step must not abort the run
             _logger.exception('Demo data step %s failed', key)
             return {'status': 'error', 'detail': str(e)[:200], 'count': 0}

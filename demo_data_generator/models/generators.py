@@ -393,7 +393,10 @@ class DemoGenerator:
             for qty, ids in qty_groups.items():
                 self.api.write('stock.move', ids, {'quantity': qty})
         # Validate — try batch first, fall back to individual
-        ctx = {'skip_backorder': True, 'picking_ids_not_to_backorder': picking_ids}
+        ctx = {
+            'skip_backorder': True, 'picking_ids_not_to_backorder': picking_ids,
+            'skip_sms': True, 'skip_immediate': True, 'skip_expired': True,
+        }
         try:
             self.api.api_call('stock.picking', 'button_validate', [picking_ids], {'context': ctx})
         except Exception:
