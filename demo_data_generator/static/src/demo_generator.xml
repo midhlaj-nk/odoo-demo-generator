@@ -1,3 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
+
+<t t-name="demo_data_generator.Action">
+    <div class="o_demo_generator">
+        <div class="container">
+            <h1>Odoo Demo Data</h1>
+            <p class="subtitle">Generate realistic demo data in this database.</p>
+
+            <details class="info-panel">
+                <summary>What does this generate?</summary>
+                <div class="info-body">
+                    <div class="info-section">
+                        <div class="info-heading">12 Modules Auto-Installed</div>
+                        <ul>
+                            <li><strong>Sales</strong>, <strong>Purchase</strong>, <strong>Inventory</strong>, <strong>Manufacturing</strong>, <strong>Accounting</strong></li>
+                            <li><strong>CRM</strong>, <strong>Projects</strong>, <strong>Timesheets</strong>, <strong>Expenses</strong>, <strong>Fleet</strong></li>
+                            <li><strong>Website</strong>, <strong>eCommerce</strong> with Demo Payment Provider</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-heading">Auto-Configured Settings</div>
+                        <ul>
+                            <li>Demo payment provider &#8212; test mode, no API keys needed</li>
+                            <li>Automatic invoicing on online payment</li>
+                            <li>MTO (Make to Order) route activated</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-heading">~500 Records Created</div>
+                        <ul>
+                            <li><strong>35 Contacts</strong> &#8212; companies + individuals</li>
+                            <li><strong>30 Products</strong> &#8212; storable, with images, on website</li>
+                            <li><strong>20 Employees</strong> &#8212; 10 departments</li>
+                            <li><strong>35 Sales Orders</strong> &#8212; confirmed, deliveries done</li>
+                            <li><strong>35 Invoices</strong> &#8212; from SOs, posted, fully paid</li>
+                            <li><strong>30 Purchase Orders</strong> &#8212; confirmed, receipts done</li>
+                            <li><strong>15 Manufacturing Orders</strong> &#8212; completed</li>
+                            <li><strong>35 CRM Leads</strong> &#8212; revenue + probability</li>
+                            <li><strong>25 Deliveries</strong> + <strong>25 Receipts</strong> + <strong>10 Transfers</strong></li>
+                            <li><strong>8 Work Centers</strong> + <strong>5 BOMs</strong> + <strong>15 Operations</strong></li>
+                            <li><strong>8 Projects</strong> + <strong>35 Tasks</strong> + <strong>40 Timesheets</strong></li>
+                            <li><strong>25 Expenses</strong> + <strong>12 Vehicles</strong></li>
+                            <li><strong>30 Journal Entries</strong> &#8212; posted, balanced entries</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-heading">Accounting Entries</div>
+                        <ul>
+                            <li><strong>Expenses</strong> &#8212; Rent, R&amp;D, Salaries, Marketing, Utilities, Bank Fees</li>
+                            <li><strong>Liabilities</strong> &#8212; Deferred Revenue, Loans, Credit Card, Salary Payable</li>
+                            <li><strong>Assets</strong> &#8212; Capital Investment, Property, Equipment</li>
+                            <li>All invoices post journal entries and reconcile payments automatically</li>
+                            <li>Sales &#8594; AR entries, Purchases &#8594; AP entries, Payments &#8594; reconciled</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-heading">MTO Showcase &#8212; Smart Display Pro</div>
+                        <ul>
+                            <li><strong>Finished good</strong> with MTO + Manufacture routes</li>
+                            <li><strong>3 raw materials</strong> with MTO + Buy routes and vendor pricing</li>
+                        </ul>
+                        <div class="info-flow">
+                            <span class="flow-step">Confirm Sale</span>
+                            <span class="flow-arrow">&#8594;</span>
+                            <span class="flow-step">MO Created</span>
+                            <span class="flow-arrow">&#8594;</span>
+                            <span class="flow-step">POs Created</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-heading">eCommerce Ready</div>
+                        <ul>
+                            <li>All products published on the storefront</li>
+                        </ul>
+                        <div class="info-flow">
+                            <span class="flow-step">Checkout</span>
+                            <span class="flow-arrow">&#8594;</span>
+                            <span class="flow-step">Payment</span>
+                            <span class="flow-arrow">&#8594;</span>
+                            <span class="flow-step">Invoice</span>
+                            <span class="flow-arrow">&#8594;</span>
+                            <span class="flow-step">Delivery</span>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <div t-if="state.phase === 'idle'" class="setup">
+                <button type="button" class="btn-generate" t-on-click="generate">Generate Demo Data</button>
+            </div>
+
+            <div t-else="" class="progress-panel">
+                <div class="progress-hero">
+                    <div class="progress-ring-wrap">
+                        <svg t-attf-class="progress-ring {{ state.working ? 'working' : '' }}" viewBox="0 0 120 120">
+                            <circle class="progress-ring-bg" cx="60" cy="60" r="52"/>
+                            <circle class="progress-ring-spinner" cx="60" cy="60" r="52"/>
+                            <circle class="progress-ring-fill" cx="60" cy="60" r="52"
+                                    t-attf-style="stroke-dasharray: {{ circumference }}; stroke-dashoffset: {{ ringOffset }}"/>
+                        </svg>
+                        <div class="progress-ring-label"><t t-esc="pct"/>%</div>
+                    </div>
+                    <div class="progress-info">
+                        <div t-attf-class="progress-current {{ currentClass }}">
+                            <t t-esc="state.fatal || state.current"/>
+                        </div>
+                        <div class="progress-counter"><t t-esc="state.done"/> of <t t-esc="state.steps.length"/> steps</div>
+                    </div>
+                </div>
+                <button t-if="state.phase === 'complete'" type="button" class="btn-generate btn-again" t-on-click="reset">Run Again</button>
+                <div class="progress-log">
+                    <t t-foreach="state.log" t-as="entry" t-key="entry.key">
+                        <div t-attf-class="log-entry {{ entry.ok ? 'done' : 'error' }}">
+                            <span t-attf-class="{{ entry.ok ? 'log-check' : 'log-x' }}"/>
+                            <span t-esc="entry.label"/>
+                            <span t-attf-class="log-detail {{ entry.ok ? '' : 'err' }}" t-esc="entry.detail"/>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </div>
+</t>
+
 </templates>
