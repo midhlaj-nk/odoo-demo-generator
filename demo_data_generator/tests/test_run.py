@@ -61,6 +61,7 @@ class TestDemoRunHistory(TransactionCase):
             expected.remove('mto_showcase')
         self.assertEqual(keys, expected)
         self.assertEqual(dict(calls)['contacts'], 4)  # ceil(35 * 10%)
+        self.assertEqual(dict(calls)['salespeople'], 5)  # fixed pool, never scaled
         self.assertEqual(run.scale, 10)
         self.assertEqual(run.state, 'done')
         self.assertEqual(len(run.line_ids), len(keys))

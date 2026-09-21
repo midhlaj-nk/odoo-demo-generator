@@ -257,10 +257,13 @@ class DemoGenerator:
         created = getattr(self, f'gen_{key}')(count)
         return created, f'{created} created'
 
+    UNSCALED_STEPS = ('salespeople',)  # a fixed pool, not daily volume
+
     def set_scale(self, percent):
         """Scale every step count to ``percent`` of the defaults (minimum 1)."""
         self._selections = {
-            k: max(1, math.ceil(v * percent / 100.0)) for k, v in DEFAULT_COUNTS.items()
+            k: v if k in self.UNSCALED_STEPS else max(1, math.ceil(v * percent / 100.0))
+            for k, v in DEFAULT_COUNTS.items()
         }
 
     def to_state(self):
