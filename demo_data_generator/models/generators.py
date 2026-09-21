@@ -116,7 +116,7 @@ def _product_image(name):
 
 
 DEFAULT_COUNTS = {
-    'contacts': 35, 'products': 30, 'employees': 20,
+    'contacts': 35, 'products': 30, 'employees': 20, 'salespeople': 5,
     'work_centers': 8, 'boms': 5, 'operations': 15,
     'projects': 8, 'tasks': 35,
     'purchase_orders': 30, 'sales': 35, 'invoices': 35,
@@ -129,7 +129,7 @@ DEFAULT_COUNTS = {
 
 class DemoGenerator:
     GENERATION_ORDER = [
-        'contacts', 'employees', 'products', 'work_centers',
+        'contacts', 'employees', 'salespeople', 'products', 'work_centers',
         'boms', 'operations', 'projects', 'tasks',
         'purchase_orders',
         'sales', 'invoices', 'journal_entries', 'crm_leads',
@@ -140,6 +140,7 @@ class DemoGenerator:
     MODULE_MAP = {
         'contacts': [],
         'employees': ['hr'],
+        'salespeople': ['sale_management', 'crm'],
         'products': [],
         'work_centers': ['mrp'],
         'boms': ['mrp'],
@@ -167,6 +168,7 @@ class DemoGenerator:
             'product': [],
             'product_tmpl': [],
             'employee': [],
+            'salesperson': [],
             'project': [],
             'task': [],
             'workcenter': [],
@@ -223,6 +225,7 @@ class DemoGenerator:
     STEP_LABELS = {
         'modules': 'Installing modules', 'configure': 'Configuring settings',
         'contacts': 'Contacts', 'products': 'Products', 'employees': 'Employees',
+        'salespeople': 'Salespeople',
         'work_centers': 'Work Centers', 'boms': 'Bills of Materials', 'operations': 'Operations',
         'projects': 'Projects', 'tasks': 'Tasks', 'sales': 'Sales Orders',
         'purchase_orders': 'Purchase Orders', 'invoices': 'Invoices', 'crm_leads': 'CRM Leads',
@@ -337,6 +340,10 @@ class DemoGenerator:
     def _ensure_employees(self, n=5):
         if not self.ids['employee']:
             self.gen_employees(n)
+
+    def _ensure_salespeople(self, n=5):
+        if not self.ids['salesperson']:
+            self.gen_salespeople(n)
 
     def _ensure_projects(self, n=5):
         if not self.ids['project']:
@@ -625,6 +632,54 @@ class DemoGenerator:
         self.ids['employee'].extend(ids)
         return len(ids)
 
+    SALES_GROUPS = ['base.group_user', 'sales_team.group_sale_salesman']
+
+    def gen_salespeople(self, count):
+        """Create (or reuse) internal users with Sales rights to spread
+        quotations and opportunities across several salespeople."""
+        self._ensure_employees(count)
+        logins = [f'sales{i}@example.com' for i in range(1, count + 1)]
+        existing = self.api.search_read(
+            'res.users', [('login', 'in', logins)], ['login'], context={'active_test': False},
+        )
+        by_login = {u['login']: u['id'] for u in existing}
+        group_ids = []
+        for xmlid in self.SALES_GROUPS:
+            gid = self.api.api_call('ir.model.data', '_xmlid_to_res_id', [xmlid], {'raise_if_not_found': False})
+            if gid:
+                group_ids.append(gid)
+        group_field = 'group_ids' if self.api.has_field('res.users', 'group_ids') else 'groups_id'
+        missing = [l for l in logins if l not in by_login]
+        created = 0
+        if missing:
+            vals_list = []
+            for login in missing:
+                vals = {'name': _fake_name(), 'login': login, 'email': login}
+                if group_ids:
+                    vals[group_field] = [(6, 0, group_ids)]
+                vals_list.append(vals)
+            new_ids = _as_list(self.api.api_call(
+                'res.users', 'create', [vals_list],
+                {'context': {'no_reset_password': True, 'mail_create_nolog': True}},
+            ))
+            for login, uid in zip(missing, new_ids):
+                by_login[login] = uid
+            created = len(new_ids)
+        pool = [by_login[l] for l in logins if l in by_login]
+        self.ids['salesperson'].extend(pool)
+        # Link salespeople to employees so HR and Sales line up
+        if created and self.ids['employee'] and self.api.has_field('hr.employee', 'user_id'):
+            free = self.api.search_read(
+                'hr.employee', [('id', 'in', self.ids['employee']), ('user_id', '=', False)], ['id'],
+                limit=len(pool),
+            )
+            for emp, uid in zip(free, pool):
+                try:
+                    self.api.write('hr.employee', [emp['id']], {'user_id': uid})
+                except Exception as e:  # noqa: BLE001 - linking is cosmetic
+                    _logger.info('Could not link employee %s to user %s: %s', emp['id'], uid, e)
+        return created
+
     def gen_work_centers(self, count):
         items = WORK_CENTERS[:count] if count <= len(WORK_CENTERS) else (
             WORK_CENTERS + random.choices(WORK_CENTERS, k=count - len(WORK_CENTERS))
@@ -748,6 +803,7 @@ class DemoGenerator:
     def gen_sales(self, count):
         self._ensure_contacts(10)
         self._ensure_products(10)
+        self._ensure_salespeople()
         self._ensure_purchase_orders()
         self._load_product_info()
         vals_list = []
@@ -762,11 +818,14 @@ class DemoGenerator:
                     'product_uom_qty': random.randint(1, 20),
                     'price_unit': info.get('list_price', 10.0),
                 }))
-            vals_list.append({
+            vals = {
                 'partner_id': random.choice(self.ids['partner']),
                 'date_order': _rand_datetime(),
                 'order_line': lines,
-            })
+            }
+            if self.ids['salesperson']:
+                vals['user_id'] = random.choice(self.ids['salesperson'])
+            vals_list.append(vals)
         ids = _as_list(self.api.create('sale.order', vals_list))
         self.ids['sale_order'].extend(ids)
         # Confirm sales orders
@@ -904,6 +963,7 @@ class DemoGenerator:
 
     def gen_crm_leads(self, count):
         self._ensure_contacts(10)
+        self._ensure_salespeople()
         # Fetch CRM stages for distribution
         stage_data = self.api.search_read('crm.stage', [], ['id', 'is_won'], limit=20)
         stages = [s for s in stage_data] if stage_data else []
@@ -922,6 +982,8 @@ class DemoGenerator:
                 'phone': _fake_phone(),
                 'date_deadline': deadline,
             }
+            if self.ids['salesperson']:
+                vals['user_id'] = random.choice(self.ids['salesperson'])
             if stages:
                 stage = random.choice(stages)
                 vals['stage_id'] = stage['id']

@@ -30,6 +30,26 @@ class TestDemoGenerator(TransactionCase):
         gen2.from_state(state)
         self.assertEqual(gen2.ids['partner'], gen.ids['partner'])
 
+    def test_salespeople_created_once_and_used_on_sales(self):
+        if 'sale.order' not in self.env:
+            self.skipTest('sale not installed')
+        gen = DemoGenerator(EnvAPI(self.env))
+        created, _ = gen.run_step('salespeople')
+        pool = gen.ids['salesperson']
+        self.assertEqual(len(pool), 5)
+        users = self.env['res.users'].browse(pool)
+        self.assertTrue(all(u.has_group('sales_team.group_sale_salesman') for u in users))
+        # second run reuses the same users
+        gen2 = DemoGenerator(EnvAPI(self.env))
+        created2, _ = gen2.run_step('salespeople')
+        self.assertEqual(created2, 0)
+        self.assertEqual(gen2.ids['salesperson'], pool)
+        # sales orders spread across the pool
+        gen.gen_sales(10)
+        orders = self.env['sale.order'].browse(gen.ids['sale_order'])
+        self.assertTrue(set(orders.mapped('user_id.id')) <= set(pool))
+        self.assertGreaterEqual(len(set(orders.mapped('user_id.id'))), 2)
+
     def test_state_roundtrip_keeps_int_keys(self):
         gen = DemoGenerator(EnvAPI(self.env))
         gen.ids['bom_product_map'] = {7: 9}

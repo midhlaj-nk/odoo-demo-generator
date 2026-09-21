@@ -1,8 +1,8 @@
 # Demo Data Generator (Odoo 19 module)
 
 An installable Odoo app that fills the database it runs in with realistic
-demo data: contacts, products with images, employees, confirmed and delivered
-sales orders, received purchase orders, paid invoices, completed manufacturing
+demo data: contacts, products with images, employees, five salesperson users,
+confirmed and delivered sales orders spread across those salespeople, received purchase orders, paid invoices, completed manufacturing
 orders, CRM opportunities, projects, tasks, timesheets, expenses, vehicles and
 posted journal entries. It also installs the business modules it needs,
 enables the MTO route, automatic invoicing and the Demo payment provider, and
@@ -26,7 +26,7 @@ failing step does not stop the others:
    sale_management, stock, mrp, purchase, hr, project, hr_timesheet,
    hr_expense, fleet, crm.
 2. Configure settings: MTO route, automatic invoice, Demo payment provider.
-3. Generate ~500 records in dependency order (contacts → employees → products →
+3. Generate ~500 records in dependency order (contacts → employees → salespeople → products →
    work centers → BOMs → operations → projects → tasks → purchase orders →
    sales orders → invoices → journal entries → CRM leads → manufacturing
    orders → deliveries → receipts → internal transfers → timesheets →
