@@ -73,12 +73,14 @@ export class DemoGeneratorAction extends Component {
         this.reset();
         this.state.phase = "running";
         this.state.current = "Connecting...";
+        let runId = null;
         try {
             this.state.steps = await this.orm.call("demo.data.generator", "get_steps");
+            runId = await this.orm.call("demo.data.generator", "start_run");
             for (const step of this.state.steps) {
                 this.state.current = step.label;
                 this.state.working = true;
-                const res = await this.orm.call("demo.data.generator", "run_step", [step.key]);
+                const res = await this.orm.call("demo.data.generator", "run_step", [step.key, runId]);
                 this.state.working = false;
                 this.state.done++;
                 const ok = res.status === "done";
@@ -100,6 +102,14 @@ export class DemoGeneratorAction extends Component {
             this.state.working = false;
             this.state.fatal = `Connection failed: ${e.message || e}`;
             this.state.phase = "complete";
+        } finally {
+            if (runId) {
+                try {
+                    await this.orm.call("demo.data.generator", "finish_run", [runId]);
+                } catch {
+                    // history bookkeeping only; never mask the run result
+                }
+            }
         }
     }
 }

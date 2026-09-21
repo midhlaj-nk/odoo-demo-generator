@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_demo_data_run_list" model="ir.ui.view">
+        <field name="name">demo.data.run.list</field>
+        <field name="model">demo.data.run</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false">
+                <field name="name"/>
+                <field name="trigger"/>
+                <field name="date_start"/>
+                <field name="duration" widget="float_time_seconds" optional="show"/>
+                <field name="scale"/>
+                <field name="record_count" sum="Total"/>
+                <field name="error_count" sum="Total"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state == 'partial'"
+                       decoration-danger="state == 'failed'"
+                       decoration-info="state == 'running'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_demo_data_run_form" model="ir.ui.view">
+        <field name="name">demo.data.run.form</field>
+        <field name="model">demo.data.run</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="trigger"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'done'"
+                                   decoration-warning="state == 'partial'"
+                                   decoration-danger="state == 'failed'"/>
+                            <field name="scale"/>
+                        </group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="record_count"/>
+                            <field name="error_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Steps" name="steps">
+                            <field name="line_ids">
+                                <list create="false" edit="false" delete="false">
+                                    <field name="sequence" column_invisible="1"/>
+                                    <field name="name"/>
+                                    <field name="status" widget="badge"
+                                           decoration-success="status == 'done'"
+                                           decoration-danger="status == 'error'"/>
+                                    <field name="count"/>
+                                    <field name="detail"/>
+                                    <field name="duration"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_demo_data_run" model="ir.actions.act_window">
+        <field name="name">History</field>
+        <field name="res_model">demo.data.run</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No demo data runs yet</p>
+            <p>Each manual Generate click and each daily scheduled run is logged here with a line per step.</p>
+        </field>
+    </record>
+</odoo>

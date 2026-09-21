@@ -1,6 +1,7 @@
 import base64
 import io
 import logging
+import math
 import random
 import string
 from datetime import datetime, timedelta
@@ -252,6 +253,12 @@ class DemoGenerator:
         count = self._selections.get(key, 0)
         created = getattr(self, f'gen_{key}')(count)
         return created, f'{created} created'
+
+    def set_scale(self, percent):
+        """Scale every step count to ``percent`` of the defaults (minimum 1)."""
+        self._selections = {
+            k: max(1, math.ceil(v * percent / 100.0)) for k, v in DEFAULT_COUNTS.items()
+        }
 
     def to_state(self):
         return {

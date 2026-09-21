@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_demo" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.demo_data_generator</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Demo Data" string="Demo Data" name="demo_data_generator" groups="base.group_system">
+                    <block title="Scheduled Generation" name="demo_data_generator_block">
+                        <setting id="demo_daily_scale_setting" string="Daily Volume"
+                                 help="Share of the full demo batch (~465 records) the daily scheduled action creates. Lower it to keep the database small.">
+                            <div class="content-group">
+                                <div class="mt16 d-flex align-items-center">
+                                    <field name="demo_daily_scale" class="oe_inline" style="width: 5rem;"/>
+                                    <span class="ms-2">% of the full batch per day</span>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

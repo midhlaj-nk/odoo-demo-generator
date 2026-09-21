@@ -6,7 +6,13 @@
                'Inventory, MRP, Accounting, CRM, Projects, HR and eCommerce',
     'license': 'LGPL-3',
     'depends': ['base', 'web'],
-    'data': ['views/actions.xml'],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/demo_run_views.xml',
+        'views/res_config_settings_views.xml',
+        'views/actions.xml',
+        'data/ir_cron.xml',
+    ],
     'assets': {
         'web.assets_backend': [
             'demo_data_generator/static/src/demo_generator.scss',
