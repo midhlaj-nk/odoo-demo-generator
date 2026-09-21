@@ -37,6 +37,22 @@ failing step does not stop the others:
 
 Running it again adds another full batch on top of the existing data.
 
+## Daily scheduled generation
+
+A scheduled action **Demo Data: daily generation** runs once a day and adds a
+fresh slice of data (all steps except module installation) so the database
+looks alive. By default it creates **25%** of the full batch (~115 records a
+day). Change it under **Settings → Demo Data → Daily Volume**; 100 = the full
+~465 records every day. The scheduled run skips the MTO showcase product once
+it exists, and logs a failed run with an explanation if Generate was never
+clicked (modules not installed).
+
+## History
+
+**Demo Data → History** lists every run, manual or scheduled: start time,
+duration, volume, records created, errors and state. Open a run to see one
+line per step with its status, count, detail and duration.
+
 ## Development
 
 Module layout:
@@ -44,8 +60,11 @@ Module layout:
 - `models/generators.py` — the data generator (ported from the original
   Flask tool; talks to the ORM through `models/env_api.py`).
 - `models/demo_generator.py` — `demo.data.generator` abstract model exposing
-  `get_steps()` and `run_step(key)` over RPC and persisting step state in
-  `ir.config_parameter`.
+  `get_steps()`, `start_run()`, `run_step(key, run_id)` and `finish_run()`
+  over RPC, persisting step state in `ir.config_parameter`, plus the
+  `_cron_generate()` entry point of the daily scheduled action.
+- `models/demo_run.py` — `demo.data.run` / `demo.data.run.line` history.
+- `models/res_config_settings.py` — the Daily Volume setting.
 - `static/src/` — OWL client action with the progress UI.
 - `tests/` — Odoo unit tests.
 
