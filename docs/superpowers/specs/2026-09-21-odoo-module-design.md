@@ -55,11 +55,13 @@ lets `generators.py` port with minimal edits.
 - Replace `print` with `_logger.info`.
 - Replace the streaming `generate()` generator with `steps()` (ordered list of
   step keys) and `run_step(key)` returning `(detail_str, count)`.
-- Per-request state: every step must work with a fresh `DemoGenerator`
-  instance. `self.ids[...]` caches are rebuilt lazily through the existing
-  `_ensure_*` helpers, which already `search` when the cache is empty. Where a
-  step assumed an earlier step populated `self.ids` directly, switch it to the
-  matching `_ensure_*` call.
+- Per-request state: a fresh `DemoGenerator` is built for every step. The
+  generated ID lists (`self.ids`), the `_po_done` flag and the resolved MTO
+  route id are serialised with `to_state()` and stored as JSON in
+  `ir.config_parameter` (`demo_data_generator.state`) after each step, and
+  restored with `from_state()` before the next. The `modules` step resets the
+  state instead of saving after itself, because module installation commits
+  and swaps the registry.
 
 **`demo.data.generator`** (`AbstractModel`) exposes two `@api.model` methods
 for RPC, both restricted to `base.group_system` via `has_group` check:
