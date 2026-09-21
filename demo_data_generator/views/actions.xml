@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_demo_generator" model="ir.actions.client">
+        <field name="name">Demo Data</field>
+        <field name="tag">demo_data_generator</field>
+    </record>
+    <menuitem id="menu_root" name="Demo Data" sequence="200"
+              action="action_demo_generator" groups="base.group_system"
+              web_icon="demo_data_generator,static/description/icon.png"/>
+</odoo>
