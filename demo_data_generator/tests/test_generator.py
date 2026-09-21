@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
@@ -58,6 +59,20 @@ class TestDemoGeneratorModel(TransactionCase):
         res = self.env['demo.data.generator'].run_step('nope')
         self.assertEqual(res['status'], 'error')
         self.assertIn('Unknown step', res['detail'])
+
+    def test_failed_step_leaves_cursor_usable(self):
+        model = self.env['demo.data.generator']
+        model._save_state({})
+
+        def boom(gen, key):
+            gen.api.env.cr.execute("SELECT 1/0")  # aborts the transaction at SQL level
+
+        with patch.object(DemoGenerator, 'run_step', boom):
+            res = model.run_step('contacts')
+        self.assertEqual(res['status'], 'error')
+        self.assertIn('division by zero', res['detail'])
+        # cursor must still work after the failure
+        self.assertTrue(self.env['res.partner'].create({'name': 'after failure'}).id)
 
     def test_non_admin_denied(self):
         user = self.env['res.users'].create({

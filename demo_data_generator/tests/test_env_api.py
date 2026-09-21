@@ -47,3 +47,12 @@ class TestEnvAPI(TransactionCase):
     def test_has_field(self):
         self.assertTrue(self.api.has_field('res.partner', 'name'))
         self.assertFalse(self.api.has_field('res.partner', 'no_such_field_xyz'))
+
+    def test_many2one_values_are_lists(self):
+        company = self.env.ref('base.main_company')
+        pid = self.api.create('res.partner', {'name': 'M2O', 'company_id': company.id})
+        row = self.api.read('res.partner', [pid], ['company_id'])[0]
+        self.assertIsInstance(row['company_id'], list)
+        self.assertEqual(row['company_id'][0], company.id)
+        row = self.api.search_read('res.partner', [('id', '=', pid)], ['company_id'])[0]
+        self.assertIsInstance(row['company_id'], list)

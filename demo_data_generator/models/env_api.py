@@ -5,6 +5,12 @@ def _ctx(model, context):
     return model.with_context(**context) if context else model
 
 
+def _rpc_rows(rows):
+    """ORM read() returns many2one values as (id, name) tuples; XML-RPC
+    returned lists. Normalise so ``isinstance(v, list)`` checks keep working."""
+    return [{k: list(v) if isinstance(v, tuple) else v for k, v in row.items()} for row in rows]
+
+
 class EnvAPI:
     """Mimics the XML-RPC ``OdooAPI`` wrapper used by the original Flask app,
     backed by an ORM environment so ``generators.py`` ports unchanged."""
@@ -23,10 +29,10 @@ class EnvAPI:
         return _ctx(self.env[model], context).search(domain, limit=limit or None).ids
 
     def search_read(self, model, domain, fields, limit=0, context=None):
-        return _ctx(self.env[model], context).search_read(domain, fields, limit=limit or None)
+        return _rpc_rows(_ctx(self.env[model], context).search_read(domain, fields, limit=limit or None))
 
     def read(self, model, ids, fields):
-        return self.env[model].browse(ids).read(fields)
+        return _rpc_rows(self.env[model].browse(ids).read(fields))
 
     def write(self, model, ids, vals):
         return self.env[model].browse(ids).write(vals)
