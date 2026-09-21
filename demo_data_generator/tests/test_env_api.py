@@ -43,3 +43,7 @@ class TestEnvAPI(TransactionCase):
             'res.partner', 'create', [{'name': 'Ctx'}], {'context': {'lang': 'en_US'}}
         )
         self.assertIsInstance(rid, int)
+
+    def test_has_field(self):
+        self.assertTrue(self.api.has_field('res.partner', 'name'))
+        self.assertFalse(self.api.has_field('res.partner', 'no_such_field_xyz'))

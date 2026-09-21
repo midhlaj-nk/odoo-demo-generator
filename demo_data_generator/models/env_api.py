@@ -12,6 +12,9 @@ class EnvAPI:
     def __init__(self, env):
         self.env = env
 
+    def has_field(self, model, name):
+        return name in self.env[model]._fields
+
     def create(self, model, vals):
         rec = self.env[model].create(vals)
         return rec.ids if isinstance(vals, list) else rec.id
